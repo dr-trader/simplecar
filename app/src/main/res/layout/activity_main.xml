@@ -8,11 +8,10 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <ImageView
-        android:id="@+id/iv_model"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="visible"
-        android:src="@drawable/roadster"/>
+<!--    <ImageView-->
+<!--        android:id="@+id/iv_model"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:visibility="visible" />-->
 
 </RelativeLayout>

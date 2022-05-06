@@ -1,90 +1,43 @@
 package ru.donspb.simplecar
 
+import android.animation.ObjectAnimator
+import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.view.MotionEvent
-import android.view.View
 import android.view.ViewGroup
-import android.view.animation.TranslateAnimation
 import android.widget.ImageView
-import android.widget.RadioButton
-import android.widget.RadioGroup
 import android.widget.RelativeLayout
 import androidx.appcompat.content.res.AppCompatResources
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import ru.donspb.simplecar.databinding.ActivityMainBinding
-import kotlin.random.Random
 
-class MainActivity : AppCompatActivity(), View.OnTouchListener {
+class MainActivity : AppCompatActivity(), IMainView {
 
+    private val presenter: Presenter = Presenter(this)
     private lateinit var binding: ActivityMainBinding
+    private lateinit var layout: RelativeLayout
+    private var isCarPlaced = false
+    private var carImageView: ImageView? = null
 
-    private lateinit var layout: ViewGroup
-    private lateinit var imageView: ImageView
-    private var xCoord: Int? = null
-    private var yCoord: Int? = null
-    private var carsList: List<CarModel> = listOf()
-
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        carsList = listOf(
-            CarModel("SUV", 150, 300, AppCompatResources.getDrawable(this,
-                R.drawable.suv)),
-            CarModel("Sport", 120, 240, AppCompatResources.getDrawable(this,
-                R.drawable.sport)),
-            CarModel("Roadster", 100, 200, AppCompatResources.getDrawable(this,
-                R.drawable.roadster))
-        )
-
         layout = binding.loRelative
-        imageView = binding.ivModel
+        setMaxCoords()
 
-        imageView.maxWidth = 100
-
-        val layoutWidth = layout.width
-        val layoutHeight = layout.height
-
-        val animation = TranslateAnimation(0f, layoutWidth.toFloat(), 0f, layoutHeight.toFloat())
-        animation.duration = 1000
-        animation.fillAfter = true
-        imageView.layoutParams = RelativeLayout.LayoutParams(100, 200)
-        imageView.startAnimation(animation)
-
-
-//        imageView.setOnTouchListener(this)
-
-//        carChooser()
-    }
-
-    override fun onTouch(view: View?, event: MotionEvent?): Boolean {
-        val x: Int? = event?.getRawX()?.toInt()
-        val y: Int? = event?.getRawY()?.toInt()
-
-        when(event?.action?.and(MotionEvent.ACTION_MASK)) {
-            MotionEvent.ACTION_DOWN -> {
-                val lparams = view?.layoutParams as RelativeLayout.LayoutParams
-                if ((x != null) && (y != null)) {
-                    xCoord = x - lparams.leftMargin
-                    yCoord = y - lparams.topMargin
+        layout.setOnTouchListener { _, motionEvent ->
+            if (motionEvent.action == MotionEvent.ACTION_DOWN) {
+                if (!isCarPlaced) {
+                    presenter.setTouchPoint(motionEvent.x.toInt(), motionEvent.y.toInt())
+                    isCarPlaced = true
                 }
+                else presenter.startRide()
             }
-            MotionEvent.ACTION_MOVE -> {
-                val lparams = view?.layoutParams as RelativeLayout.LayoutParams
-                if ((x != null) && y != null) {
-                    lparams.leftMargin = x - xCoord!!
-                    lparams.topMargin = y - yCoord!!
-                    lparams.rightMargin = -250
-                    lparams.bottomMargin = -250
-                    view.layoutParams = lparams
-                }
-            }
-            else -> { }
+            true
         }
-        return true
     }
 
 //    fun carChooser() {
@@ -111,4 +64,41 @@ class MainActivity : AppCompatActivity(), View.OnTouchListener {
 //
 //        }
 //    }
+
+    private fun setMaxCoords() {
+        val metrics = this.resources.displayMetrics
+        presenter.setMaxCoords(metrics.widthPixels, metrics.heightPixels)
+    }
+
+    override fun showCar(x: Int, y: Int, car: CarModel) {
+        val layoutParams = RelativeLayout.LayoutParams(car.width, car.height)
+        layoutParams.setMargins(x,y,0,0)
+        carImageView = ImageView(this)
+        carImageView?.layoutParams = layoutParams
+        carImageView?.setImageDrawable(car.modelImg?.let {
+            AppCompatResources.getDrawable(this, it)
+        })
+        (layout as ViewGroup).addView(carImageView)
+    }
+
+    override fun rotateCar(angle: Float, speed: Long) {
+        ObjectAnimator.ofFloat(carImageView!!, "rotation", angle).apply {
+            duration = speed
+            start()
+        }
+    }
+
+    override fun moveCarHorizontally(speed: Long, toX: Float) {
+        ObjectAnimator.ofFloat(carImageView!!, "translationX", toX).apply {
+            duration = speed
+            start()
+        }
+    }
+
+    override fun moveCarVertically(speed: Long, toY: Float) {
+        ObjectAnimator.ofFloat(carImageView!!, "translationY", toY).apply {
+            duration = speed
+            start()
+        }
+    }
 }
