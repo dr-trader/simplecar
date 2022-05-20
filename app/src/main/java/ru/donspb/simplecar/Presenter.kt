@@ -5,12 +5,16 @@ import kotlin.random.Random
 
 const val MIN_POINTS_NUMBER = 2
 const val MAX_POINTS_NUMBER = 7
-const val MOVE_SPEED_MS_PIXEL = 40L
+const val MOVE_SPEED_MS_PIXEL = 10L
 const val ROTATION_SPEED_MS_90 = 1500L
 const val TOP_ROTATION_ANGLE = 0
 const val BOTTOM_ROTATION_ANGLE = 180
-const val RIGHT_ROTATION_ANGLE = 270
-const val LEFT_ROTATION_ANGLE = 90
+const val RIGHT_ROTATION_ANGLE = 90
+const val LEFT_ROTATION_ANGLE = 270
+const val MOVE_ROTATION = "rotation"
+const val MOVE_TRANS_X = "translationX"
+const val MOVE_TRANS_Y = "translationY"
+
 
 class Presenter(private val mainView: IMainView) {
     private var maxX: Int = 0
@@ -24,7 +28,8 @@ class Presenter(private val mainView: IMainView) {
         CarModel("Sport", 120, 240, R.drawable.sport),
         CarModel("Roadster", 100, 200, R.drawable.roadster)
     )
-    private var selectedCar = carsList[2]
+
+    private var selectedCar = carsList[Random.nextInt(0, carsList.size - 1)]
 
     fun setMaxCoords(width: Int, height: Int) {
         maxX = width
@@ -59,6 +64,7 @@ class Presenter(private val mainView: IMainView) {
             moveCar(firstDirection, newX, newY)
             moveCar(!firstDirection, newX, newY)
         }
+        mainView.startAnimationSequence()
     }
 
     private fun moveCar(direction: Boolean, newX: Int, newY: Int) {
@@ -68,18 +74,20 @@ class Presenter(private val mainView: IMainView) {
             distance = (newY - carY)
             if (distance < 0) carRotation = TOP_ROTATION_ANGLE
             else if (distance > 0) carRotation = BOTTOM_ROTATION_ANGLE
-
-            mainView.rotateCar((carRotation - oldAngle).toFloat(), ROTATION_SPEED_MS_90)
-            mainView.moveCarVertically(abs(MOVE_SPEED_MS_PIXEL * distance), newY.toFloat())
+            mainView.makeAnimation(ROTATION_SPEED_MS_90, (carRotation - oldAngle).toFloat(), MOVE_ROTATION)
+            mainView.makeAnimation(abs(MOVE_SPEED_MS_PIXEL * distance),
+                distance.toFloat(),
+                MOVE_TRANS_Y)
             carY = newY
         }
         else {
             distance = (newX - carX)
             if (distance > 0) carRotation = RIGHT_ROTATION_ANGLE
             else if (distance < 0) carRotation = LEFT_ROTATION_ANGLE
-
-            mainView.rotateCar((carRotation - oldAngle).toFloat(), ROTATION_SPEED_MS_90)
-            mainView.moveCarHorizontally(abs(MOVE_SPEED_MS_PIXEL * distance), newX.toFloat())
+            mainView.makeAnimation(ROTATION_SPEED_MS_90, (carRotation - oldAngle).toFloat(), MOVE_ROTATION)
+            mainView.makeAnimation(abs(MOVE_SPEED_MS_PIXEL * distance),
+                distance.toFloat(),
+                MOVE_TRANS_X)
             carX = newX
         }
     }
